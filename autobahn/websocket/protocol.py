@@ -31,6 +31,7 @@ import struct
 import random
 import os
 import pickle
+import re
 import copy
 import json
 
@@ -143,6 +144,12 @@ def _is_same_origin(websocket_origin, host_scheme, host_port, host_policy):
             return True
 
     return False
+
+_CR_LF_RE = re.compile(br"[\r\n]+.*")
+
+
+def _protect_redirect_url(url):
+    return _CR_LF_RE.sub(b"", url)
 
 
 class TrafficStats(object):
@@ -2646,7 +2653,7 @@ class WebSocketServerProtocol(WebSocketProtocol):
                         #
                         # https://localhost:9000/?redirect=https%3A%2F%2Ftwitter.com%2F&after=3
                         #
-                        url = self.http_request_params['redirect'][0]
+                        url = _protect_redirect_url(self.http_request_params['redirect'][0])
                         if 'after' in self.http_request_params and len(self.http_request_params['after']) > 0:
                             after = int(self.http_request_params['after'][0])
                             self.log.debug(
